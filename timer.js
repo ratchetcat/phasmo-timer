@@ -1,9 +1,9 @@
-let countdown;
+let counter;
 const timerDisplay = document.querySelector('#timer');
 const startButton = document.querySelector('#start');
 const resetButton = document.querySelector('#reset');
 const beep = document.querySelector('#beep');
-const startInterval = 180;
+const targetInterval = 180;
 const intervals = [
     { seconds: 10, name: "Test", audioFile: "test.wav" },
     { seconds: 60, name: "Demon", audioFile: "demon.wav" },
@@ -11,43 +11,48 @@ const intervals = [
     { seconds: 170, name: "Spirit", audioFile: "spirit.wav" }
 ];
 
-timerDisplay.textContent = startInterval;
+// set initial count
+displayCount(0);
 
-function timer(seconds) {
-    clearInterval(countdown);
+function timer() {
+    clearInterval(counter);
 
-    const now = Date.now();
-    const then = now + seconds * 1000;
-    displayTimeLeft(seconds);
+    const then = Date.now();
+    console.log(then);
 
-    countdown = setInterval(() => {
-        const elapsedSeconds = Math.round((Date.now() - then) / 1000) + startInterval;
+    counter = setInterval(() => {
+        const elapsedSeconds = Math.round((Date.now() - then ) / 1000);
         console.log(elapsedSeconds);
 
-        const secondsLeft = Math.round((then - Date.now()) / 1000);
-
+        // check for matching interval to alert / play sound
         const interval = intervals.find(i => i.seconds === elapsedSeconds);
         if(interval) {
             document.body.style.background = '#ff0000'; // change color
 
-            timerDisplay.textContent = interval.name;
+            // display interval name
+            displayCount(interval.name);
 
+            // play audio
             const audio = new Audio(interval.audioFile);
             audio.play(); // play sound
 
-            setTimeout(() => document.body.style.background = '', 1000); // revert color after 1 sec
+            setTimeout(() => {
+                document.body.style.background = ''
+            }, 1000); // revert color after 1 sec
         }
 
-        if(secondsLeft < 0) {
-            clearInterval(countdown);
+        // check whether elapsedSeconds is equal to or greater than targetInterval
+        if(elapsedSeconds >= targetInterval) {
+            clearInterval(counter);
             return;
         }
 
-        displayTimeLeft(secondsLeft);
+        // display for each tick
+        displayCount(elapsedSeconds);
     }, 1000);
 }
 
-function displayTimeLeft(seconds) {
+function displayCount(seconds) {
     timerDisplay.textContent = seconds;
 }
 
@@ -56,9 +61,10 @@ startButton.addEventListener('click', () => {
     const unlockAudio = new Audio();
     unlockAudio.play();
 
-    timer(startInterval)
+    timer(0);
 });
+
 resetButton.addEventListener('click', () => {
-    clearInterval(countdown);
-    timerDisplay.textContent = startInterval;
+    clearInterval(counter);
+    timerDisplay.textContent = 0;
 });
