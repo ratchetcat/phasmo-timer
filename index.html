@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Countdown Timer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        h1 {
+            font-size:10em;
+        }
+        button {
+            width:100%;
+            padding:10%;
+            margin-bottom:1%;
+            font-size:100%;
+        }
+        button#start {
+            background-color:#090;
+            color:#fff;
+            font-weight:bold;
+        }
+        button#start:hover {
+            background-color:#0f0;
+        }
+        button#reset {
+            background-color:#c00;
+            color:#fff;
+            font-weight:bold;
+        }
+        button#reset:hover {
+            background-color:#f00;
+        }
+    </style>
+</head>
+<body>
+<h1 id="timer"></h1>
+<button id="start">Start</button>
+<button id="reset">Reset</button>
+
+<audio id="beep" src=""></audio>
+
+<script src="timer.js"></script>
+</body>
+</html>
