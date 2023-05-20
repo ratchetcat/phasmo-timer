@@ -51,7 +51,13 @@ function displayTimeLeft(seconds) {
     timerDisplay.textContent = seconds;
 }
 
-startButton.addEventListener('click', () => timer(startInterval));
+startButton.addEventListener('click', () => {
+    // Play a silent audio to unlock audio playback
+    const unlockAudio = new Audio();
+    unlockAudio.play();
+
+    timer(startInterval)
+});
 resetButton.addEventListener('click', () => {
     clearInterval(countdown);
     timerDisplay.textContent = startInterval;
