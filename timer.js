@@ -18,11 +18,12 @@ function timer() {
     clearInterval(counter);
 
     const then = Date.now();
-    console.log(then);
 
     counter = setInterval(() => {
         const elapsedSeconds = Math.round((Date.now() - then ) / 1000);
-        console.log(elapsedSeconds);
+
+        // display for each tick
+        displayCount(elapsedSeconds);
 
         // check for matching interval to alert / play sound
         const interval = intervals.find(i => i.seconds === elapsedSeconds);
@@ -34,6 +35,8 @@ function timer() {
 
             // play audio
             const audio = new Audio(interval.audioFile);
+            audio.muted = true;
+            audio.muted = false;
             audio.play(); // play sound
 
             setTimeout(() => {
@@ -44,11 +47,7 @@ function timer() {
         // check whether elapsedSeconds is equal to or greater than targetInterval
         if(elapsedSeconds >= targetInterval) {
             clearInterval(counter);
-            return;
         }
-
-        // display for each tick
-        displayCount(elapsedSeconds);
     }, 1000);
 }
 
@@ -59,6 +58,8 @@ function displayCount(seconds) {
 startButton.addEventListener('click', () => {
     // Play a silent audio to unlock audio playback
     const unlockAudio = new Audio();
+    unlockAudio.muted = true;
+    unlockAudio.muted = false;
     unlockAudio.play();
 
     timer(0);
