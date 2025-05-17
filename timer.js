@@ -1,6 +1,14 @@
+'use strict';
+
 // utility code to set up cross-browser AudioContext
 // from https://curtisrobinson.medium.com/how-to-auto-play-audio-in-safari-with-javascript-21d50b0a2765
 let audioContext = new (window.AudioContext || window.webkitAudioContext)()
+
+/**
+ * Loads a sound file and returns a sound object
+ * @param {string} filename - Path to the audio file
+ * @return {Object} Sound object with volume and audioBuffer properties
+ */
 function loadSound(filename) {
     let sound = {volume: 1, audioBuffer: null}
 
@@ -15,47 +23,62 @@ function loadSound(filename) {
                 sound.audioBuffer = buffer
             },
             function(error) {
-                debugger
+                console.error('Error setting audio buffer:', error);
             }
         )
     }
 
-    ajax.onerror = function() {
-        debugger
+    ajax.onerror = function(error) {
+        console.error('Error loading sound file:', error);
     }
 
     ajax.send()
 
     return sound
 }
+
 function playSound(sound) {
-    if(!sound.audioBuffer)
-        return false
+    if(!sound.audioBuffer) {
+        console.warn("Attempted to play sound that hasn't loaded yet");
+        return false;
+    }
 
-    let source = audioContext.createBufferSource()
-    if(!source)
-        return false
+    try {
+        let source = audioContext.createBufferSource();
+        if(!source) {
+            console.error("Failed to create audio source");
+            return false;
+        }
 
-    source.buffer = sound.audioBuffer
-    if(!source.start)
-        source.start = source.noteOn
+        source.buffer = sound.audioBuffer;
+        if(!source.start)
+            source.start = source.noteOn;
 
-    if(!source.start)
-        return false
-    let gainNode = audioContext.createGain()
-    gainNode.gain.value = sound.volume
-    source.connect(gainNode)
-    gainNode.connect(audioContext.destination)
+        if(!source.start) {
+            console.error("No start method available on audio source");
+            return false;
+        }
 
-    source.start(0)
+        let gainNode = audioContext.createGain();
+        gainNode.gain.value = sound.volume;
+        source.connect(gainNode);
+        gainNode.connect(audioContext.destination);
 
-    sound.gainNode = gainNode
-    return true
+        source.start(0);
+
+        sound.gainNode = gainNode;
+        return true;
+    } catch (error) {
+        console.error("Error playing sound:", error);
+        return false;
+    }
 }
+
 function stopSound(sound) {
     if(sound.gainNode)
         sound.gainNode.gain.value = 0
 }
+
 function setSoundVolume(sound, volume) {
     sound.volume = volume
 
@@ -63,11 +86,13 @@ function setSoundVolume(sound, volume) {
         sound.gainNode.gain.value = volume
 }
 
-let counter;
+let timerIntervalId;
 const timerDisplay = document.querySelector('#timer');
 const startButton = document.querySelector('#start');
 const resetButton = document.querySelector('#reset');
-const targetInterval = 180;
+const targetInterval = 5;
+
+// define intervals and sounds to play at each interval
 const intervals = [
     { seconds: 10, name: "Test", audioFile: loadSound("test.wav") },
     { seconds: 60, name: "Demon", audioFile: loadSound("demon.wav") },
@@ -79,53 +104,77 @@ const intervals = [
 const unlockSound = loadSound("test.wav");
 unlockSound.volume = 0;
 
-// set initial count
-displayCount(0);
-
-function timer() {
-    clearInterval(counter);
+/**
+ * Starts a timer that updates every second; on each tick, compares tick value to configured intervals and
+ * plays sound / shows name if applicable
+ * The timer calculates the elapsed time in seconds and triggers updates or notifications accordingly.
+ *
+ * @return {void} Does not return a value.
+ */
+function startTimer() {
+    clearInterval(timerIntervalId);
 
     const then = Date.now();
 
-    counter = setInterval(() => {
+    timerIntervalId = setInterval(() => {
         const elapsedSeconds = Math.round((Date.now() - then ) / 1000);
 
         // display for each tick
-        displayCount(elapsedSeconds);
+        updateTimerDisplay(elapsedSeconds);
 
-        // check for matching interval to alert / play sound
-        const interval = intervals.find(i => i.seconds === elapsedSeconds);
-        if(interval) {
-            document.body.style.background = '#ff0000'; // change color
+        checkAndNotifyInterval(elapsedSeconds);
 
-            // display interval name
-            displayCount(interval.name);
-
-            playSound(interval.audioFile);
-
-            setTimeout(() => {
-                document.body.style.background = ''
-            }, 1000); // revert color after 1 sec
-        }
-
-        // check whether elapsedSeconds is equal to or greater than targetInterval
-        if(elapsedSeconds >= targetInterval) {
-            clearInterval(counter);
-        }
     }, 1000);
 }
 
-function displayCount(seconds) {
+function updateTimerDisplay(seconds) {
     timerDisplay.textContent = seconds;
 }
 
-// startButton unlocks AudioContext and starts timer
-startButton.addEventListener('click', () => {
-    playSound(unlockSound)
-    timer(0);
-});
+/**
+ * Checks if the given elapsed time matches an interval and triggers notifications if a match is found.
+ *
+ * @param {number} elapsedSeconds - The number of seconds that have elapsed.
+ * @return {void} This function does not return a value.
+ */
+function checkAndNotifyInterval(elapsedSeconds) {
+    const interval = intervals.find(i => i.seconds === elapsedSeconds);
+    if (interval) {
+        document.body.style.background = '#ff0000';
+        updateTimerDisplay(interval.name);
+        playSound(interval.audioFile);
 
-resetButton.addEventListener('click', () => {
-    clearInterval(counter);
-    timerDisplay.textContent = 0;
-});
+        setTimeout(() => {
+            document.body.style.background = '';
+        }, 1000);
+    } else {
+        if(elapsedSeconds >= targetInterval) {
+            clearInterval(timerIntervalId);
+            updateTimerDisplay(0);
+        }
+    }
+}
+
+/**
+ * Initializes event listeners for start and reset buttons.
+ * The start button listener triggers the playSound function with an unlock sound
+ * and starts the timer with an initial value of 0.
+ * The reset button listener stops the active timer and resets the timer display to 0.
+ *
+ * @return {void} This method does not return a value.
+ */
+function initializeEventListeners() {
+    startButton.addEventListener('click', () => {
+        playSound(unlockSound);
+        startTimer(0);
+    });
+
+    resetButton.addEventListener('click', () => {
+        clearInterval(timerIntervalId);
+        updateTimerDisplay(0);
+    });
+}
+
+initializeEventListeners();
+
+updateTimerDisplay(0);
