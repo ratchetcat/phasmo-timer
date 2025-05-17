@@ -87,10 +87,13 @@ function setSoundVolume(sound, volume) {
 }
 
 let timerIntervalId;
+
+// set end time
+const targetInterval = 180;
+
 const timerDisplay = document.querySelector('#timer');
 const startButton = document.querySelector('#start');
 const resetButton = document.querySelector('#reset');
-const targetInterval = 5;
 
 // define intervals and sounds to play at each interval
 const intervals = [
